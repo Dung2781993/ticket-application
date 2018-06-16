@@ -1,0 +1,126 @@
+﻿@model TicketApplication.Models.TicketModel
+@using TicketApplication.Models
+@using Kendo.Mvc.UI
+@{
+    ViewBag.Title = "Ticket Viewer";
+}
+
+<script src="https://kendo.cdn.telerik.com/2017.1.223/js/kendo.all.min.js"></script>
+
+@if(TempData["WarningMessage"] == null)
+{   <h2 style="position:relative; text-align:center">Ticket Viewer</h2>
+    <div>
+        @(Html.Kendo().Grid<TicketModel>()
+                                                    .Name("TicketGrid")
+                                                    .Columns(columns =>
+                                                    {
+                                                        columns.Bound(c => c.TicketStatus).Title("Ticket Status").Width(100).HtmlAttributes(new { style = "color: red;" });
+                                                        columns.Bound(c => c.TicketTitle).Title("Title").Width(150);
+                                                    })
+                                                    .Editable(editable => editable.Mode(GridEditMode.InLine))
+                                                    .Scrollable(s => s.Height("auto"))
+                                                    .Filterable(filterable => filterable.Extra(false))
+                                                    .Sortable()
+                                                    .Pageable()
+                                                    .ClientDetailTemplateId("TicketInfo")
+                                                    .HtmlAttributes(new { style = "font-size: 15px;" })
+                                                    .DataSource(dataSource => dataSource
+                                                        .Ajax()
+                                                        .PageSize(25)
+                                                        .Model(model =>
+                                                        {
+                                                            model.Id(p => p.Id);
+                                                            model.Field(p => p.TicketStatus).Editable(false);
+                                                            model.Field(p => p.TicketTitle).Editable(false);
+                                                        })
+                                                        .Read(read => read.Action("TicketList_Read", "Home"))
+                                                    )
+                                                    .AutoBind(true)
+                                                    .Selectable(selectable => selectable.Mode(GridSelectionMode.Single))
+                                                    .Resizable(resize => resize.Columns(true))
+                                                    .Navigatable()
+                //.Events(events => events.DetailExpand("detailExpand"))
+        )
+
+    </div>
+
+    <script type="text/javascript">
+
+        var expandedRow;
+
+        //Create client campaign template
+        function detailExpand(e) {
+            var grid = $('#TicketGrid').data('kendoGrid');
+            // Only one open at a time
+            if (expandedRow != null && expandedRow[0] != e.masterRow[0]) {
+                grid.collapseRow(expandedRow);
+            }
+            expandedRow = e.masterRow;
+            grid.select(expandedRow);
+        }
+    </script>
+
+
+    <script id="TicketInfo" type="text/kendo-tmpl">
+        @(Html.Kendo().TabStrip()
+                                    .Name("tabStrip_#=Id#")
+                                    .SelectedIndex(0)
+                                    .Items(tabStrip =>
+                                    {
+                                        tabStrip.Add().Text("Ticket Info")
+                            .Content(
+                                                @<text>
+                                                    <div id="TicketInfo_#=Id#">
+                                                        @(Html.Kendo().Grid<TicketModel>()
+                                                                                                                            .Name("TicketInfoGrid_#=Id#")
+                                                                                                                            .Columns(columns =>
+                                                                                                                            {
+                                                                                                                                columns.Bound(c => c.RequesterId).Title("Request Number").Filterable(filter => filter.Extra(false));
+                                                                                                                                columns.Bound(c => c.TicketTitle).Title("Title").Filterable(filter => filter.Extra(false));
+                                                                                                                                columns.Bound(c => c.TicketDescription).Title("Description").Filterable(filter => filter.Extra(false));
+                                                                                                                                columns.Bound(c => c.CreatedDate).Title("Created Date").Format("{0:dd/MM/yyyy}").Filterable(filter => filter.Extra(false));
+                                                                                                                            })
+                                                                                                                            .DataSource(dataSource => dataSource
+                                                                                                                                .Ajax()
+                                                                                                                                .PageSize(5)
+                                                                                                                                .Read(read => read.Action("TicketDetailed_Read", "Home", new { Id = "#=Id#" }))
+                                                                                                                                .Model(model =>
+                                                                                                                                {
+                                                                                                                                    model.Id(p => p.Id);
+                                                                                                                                    model.Field(p => p.TicketTitle).Editable(false);
+                                                                                                                                    model.Field(p => p.TicketDescription).Editable(false);
+                                                                                                                                })
+                                                                                                                            )
+                                                                                                                            .Pageable()
+                                                                                                                            .Sortable()
+                                                                                                                            .Filterable()
+                                                                                                                            .Selectable(selectable => selectable
+                                                                                                                                                          .Mode(GridSelectionMode.Multiple)
+                                                                                                                                                          .Type(GridSelectionType.Row))
+                                                                                                                            .Resizable(resize => resize.Columns(true))
+                                                                                                                            .HtmlAttributes(new { style = "font-size: 15px;" })
+                                                                                                                            .ToClientTemplate()
+                                                        )
+                                                        <br />
+
+                                                        <button type="button" id="ArchiveTicket" class="k-button">Archive Ticket</button>
+                                                        <button type="button" id="UpdateTicketStatus" class="k-button"> Update Ticket </button>
+                                                    </div>
+                                                </text>
+                                                            );
+                                            }).ToClientTemplate()
+        )
+    </script>
+}
+
+@if(TempData["WarningMessage"] != null)
+{
+    <div class="alert-warning col-lg-12" style="text-align:center">
+        <h2><b>@TempData["WarningMessage"]</b></h2>
+        <h4>@TempData["Error"]</h4>
+        <div style="position: relative;  text-align:center;">
+            <img src="~/Images/404.jpg" style="width: 30%; height: auto;" />
+        </div>
+    </div>
+}
+

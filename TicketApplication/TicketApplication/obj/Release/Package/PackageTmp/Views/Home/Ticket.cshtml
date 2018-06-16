@@ -1,0 +1,31 @@
+﻿@model TicketApplication.Models.TicketModel
+@using TicketApplication.Models
+@using Kendo.Mvc.UI
+@{
+    ViewBag.Title = "Ticket";
+}
+
+<h2>Ticket Viewer</h2>
+
+<h4>Ticket List</h4>
+@(Html.Kendo().Grid<TicketModel>()
+            .Name("TicketGrid")
+            .Columns(columns =>
+            {
+                columns.Bound(c => c.TicketStatus).Width(100);
+                columns.Bound(c => c.TicketTitle).Width(150);
+            })
+            .Editable(editable => editable.Mode(GridEditMode.InLine))
+            .Scrollable(s => s.Height("auto"))
+            .Filterable(filterable => filterable.Extra(false))
+            .Sortable()
+            .Navigatable()
+            .HtmlAttributes(new {style ="font-size: 12px;" })
+            .DataSource(dataSource => dataSource
+                .Ajax()
+                .PageSize(10)
+                .Read(read => read.Action("TicketList_Read", "Home"))
+            )
+
+)
+
